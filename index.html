@@ -1,0 +1,837 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <link rel="stylesheet" href="css/leaflet.css">
+        <link rel="stylesheet" href="css/L.Control.Layers.Tree.css">
+        <link rel="stylesheet" href="css/qgis2web.css">
+        <link rel="stylesheet" href="css/fontawesome-all.min.css">
+        <link rel="stylesheet" href="css/filter.css">
+<link rel="stylesheet" href="css/nouislider.min.css">
+        <link rel="stylesheet" href="css/leaflet-control-geocoder.Geocoder.css">
+        <style>
+        html, body, #map {
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            margin: 0;
+        }
+        </style>
+        <title>SÂN BAY</title>
+    </head>
+    <body>
+        <div id="map">
+        </div>
+        <script src="js/qgis2web_expressions.js"></script>
+        <script src="js/leaflet.js"></script>
+        <script src="js/L.Control.Layers.Tree.min.js"></script>
+        <script src="js/leaflet.rotatedMarker.js"></script>
+        <script src="js/leaflet.pattern.js"></script>
+        <script src="js/leaflet-hash.js"></script>
+        <script src="js/Autolinker.min.js"></script>
+        <script src="js/rbush.min.js"></script>
+        <script src="js/labelgun.min.js"></script>
+        <script src="js/labels.js"></script>
+        <script src="js/leaflet-control-geocoder.Geocoder.js"></script>
+        <script src="js/tailDT.js"></script>
+<script src="js/nouislider.min.js"></script>
+<script src="js/wNumb.js"></script>
+        <script src="data/LpKtHpLoiVTr_1.js"></script>
+        <script src="data/PhnLoiSnBay_2.js"></script>
+        <script src="data/VTrHotng_3.js"></script>
+        <script src="data/SnBay_4.js"></script>
+        <script>
+        var highlightLayer;
+        function highlightFeature(e) {
+            highlightLayer = e.target;
+
+            if (e.target.feature.geometry.type === 'LineString' || e.target.feature.geometry.type === 'MultiLineString') {
+              highlightLayer.setStyle({
+                color: '#ffff00',
+              });
+            } else {
+              highlightLayer.setStyle({
+                fillColor: '#ffff00',
+                fillOpacity: 1
+              });
+            }
+        }
+        var map = L.map('map', {
+            zoomControl:false, maxZoom:28, minZoom:1
+        }).fitBounds([[32.133390639652866,45.49249788973343],[39.049259198972116,57.11898635455127]]);
+        var hash = new L.Hash(map);
+        map.attributionControl.setPrefix('<a href="https://github.com/tomchadwin/qgis2web" target="_blank">qgis2web</a> &middot; <a href="https://leafletjs.com" title="A JS library for interactive maps">Leaflet</a> &middot; <a href="https://qgis.org">QGIS</a>');
+        var autolinker = new Autolinker({truncate: {length: 30, location: 'smart'}});
+        // remove popup's row if "visible-with-data"
+        function removeEmptyRowsFromPopupContent(content, feature) {
+         var tempDiv = document.createElement('div');
+         tempDiv.innerHTML = content;
+         var rows = tempDiv.querySelectorAll('tr');
+         for (var i = 0; i < rows.length; i++) {
+             var td = rows[i].querySelector('td.visible-with-data');
+             var key = td ? td.id : '';
+             if (td && td.classList.contains('visible-with-data') && feature.properties[key] == null) {
+                 rows[i].parentNode.removeChild(rows[i]);
+             }
+         }
+         return tempDiv.innerHTML;
+        }
+        // add class to format popup if it contains media
+		function addClassToPopupIfMedia(content, popup) {
+			var tempDiv = document.createElement('div');
+			tempDiv.innerHTML = content;
+			if (tempDiv.querySelector('td img')) {
+				popup._contentNode.classList.add('media');
+					// Delay to force the redraw
+					setTimeout(function() {
+						popup.update();
+					}, 10);
+			} else {
+				popup._contentNode.classList.remove('media');
+			}
+		}
+        var title = new L.Control({'position':'topright'});
+        title.onAdd = function (map) {
+            this._div = L.DomUtil.create('div', 'info');
+            this.update();
+            return this._div;
+        };
+        title.update = function () {
+            this._div.innerHTML = '<h2>SÂN BAY</h2>';
+        };
+        title.addTo(map);
+        var abstract = new L.Control({'position':'bottomright'});
+        abstract.onAdd = function (map) {
+            this._div = L.DomUtil.create('div',
+            'leaflet-control abstract');
+            this._div.id = 'abstract'
+
+                abstract.show();
+                return this._div;
+            };
+            abstract.show = function () {
+                this._div.classList.remove("abstract");
+                this._div.classList.add("abstractUncollapsed");
+                this._div.innerHTML = 'Đây là bản đồ thiết kế ngày 15 tháng 4 năm 2025 cho thấy thông tin của các Sân Bay. Thực hiện bởi Huỳnh Thị Thu Oanh. MSSV 2228501030153';
+        };
+        abstract.addTo(map);
+        var zoomControl = L.control.zoom({
+            position: 'topleft'
+        }).addTo(map);
+        var bounds_group = new L.featureGroup([]);
+        function setBounds() {
+        }
+        map.createPane('pane_GoogleSatellite_0');
+        map.getPane('pane_GoogleSatellite_0').style.zIndex = 400;
+        var layer_GoogleSatellite_0 = L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+            pane: 'pane_GoogleSatellite_0',
+            opacity: 1.0,
+            attribution: '<a href="https://www.google.at/permissions/geoguidelines/attr-guide.html">Map data ©2015 Google</a>',
+            minZoom: 1,
+            maxZoom: 28,
+            minNativeZoom: 0,
+            maxNativeZoom: 20
+        });
+        layer_GoogleSatellite_0;
+        map.addLayer(layer_GoogleSatellite_0);
+        function pop_LpKtHpLoiVTr_1(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var popupContent = '<table>\
+                    <tr>\
+                        <th scope="row">Tên Sân Bay</th>\
+                        <td>' + (feature.properties['name'] !== null ? autolinker.link(String(feature.properties['name']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Mã định danh gps</th>\
+                        <td>' + (feature.properties['gps_code'] !== null ? autolinker.link(String(feature.properties['gps_code']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Ví Trí Hoạt Động</th>\
+                        <td>' + (feature.properties['ViTriHoatD'] !== null ? autolinker.link(String(feature.properties['ViTriHoatD']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Phân Loại Sân Bay</th>\
+                        <td>' + (feature.properties['PLSanBay'] !== null ? autolinker.link(String(feature.properties['PLSanBay']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Lớp Kết Hợp (Loại + Vị Trí)</th>\
+                        <td>' + (feature.properties['LopKetHop'] !== null ? autolinker.link(String(feature.properties['LopKetHop']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_LpKtHpLoiVTr_1_0(feature) {
+            switch(String(feature.properties['LopKetHop'])) {
+                case 'Bãi đỗ máy':
+                    return {
+                pane: 'pane_LpKtHpLoiVTr_1',
+                radius: 4.0,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(45,204,132,1.0)',
+                interactive: true,
+            }
+                    break;
+                case 'Đường băng':
+                    return {
+                pane: 'pane_LpKtHpLoiVTr_1',
+                radius: 4.0,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(224,56,236,1.0)',
+                interactive: true,
+            }
+                    break;
+                case 'Loại khác':
+                    return {
+                pane: 'pane_LpKtHpLoiVTr_1',
+                radius: 4.0,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(153,218,24,1.0)',
+                interactive: true,
+            }
+                    break;
+                case 'Nhà ga cấp':
+                    return {
+                pane: 'pane_LpKtHpLoiVTr_1',
+                radius: 4.0,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(226,119,103,1.0)',
+                interactive: true,
+            }
+                    break;
+            }
+        }
+        map.createPane('pane_LpKtHpLoiVTr_1');
+        map.getPane('pane_LpKtHpLoiVTr_1').style.zIndex = 401;
+        map.getPane('pane_LpKtHpLoiVTr_1').style['mix-blend-mode'] = 'normal';
+        var layer_LpKtHpLoiVTr_1 = new L.geoJson(json_LpKtHpLoiVTr_1, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_LpKtHpLoiVTr_1',
+            layerName: 'layer_LpKtHpLoiVTr_1',
+            pane: 'pane_LpKtHpLoiVTr_1',
+            onEachFeature: pop_LpKtHpLoiVTr_1,
+            pointToLayer: function (feature, latlng) {
+                var context = {
+                    feature: feature,
+                    variables: {}
+                };
+                return L.circleMarker(latlng, style_LpKtHpLoiVTr_1_0(feature));
+            },
+        });
+        bounds_group.addLayer(layer_LpKtHpLoiVTr_1);
+        map.addLayer(layer_LpKtHpLoiVTr_1);
+        function pop_PhnLoiSnBay_2(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var popupContent = '<table>\
+                    <tr>\
+                        <th scope="row">Tên Sân Bay</th>\
+                        <td>' + (feature.properties['name'] !== null ? autolinker.link(String(feature.properties['name']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Mã định danh gps</th>\
+                        <td>' + (feature.properties['gps_code'] !== null ? autolinker.link(String(feature.properties['gps_code']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Ví Trí Hoạt Động</th>\
+                        <td>' + (feature.properties['ViTriHoatD'] !== null ? autolinker.link(String(feature.properties['ViTriHoatD']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Phân Loại Sân Bay</th>\
+                        <td>' + (feature.properties['PLSanBay'] !== null ? autolinker.link(String(feature.properties['PLSanBay']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Lớp Kết Hợp (Loại + Vị Trí)</th>\
+                        <td>' + (feature.properties['LopKetHop'] !== null ? autolinker.link(String(feature.properties['LopKetHop']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_PhnLoiSnBay_2_0(feature) {
+            switch(String(feature.properties['PLSanBay'])) {
+                case 'Cấp lớn':
+                    return {
+                pane: 'pane_PhnLoiSnBay_2',
+                radius: 4.0,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(214,64,94,1.0)',
+                interactive: true,
+            }
+                    break;
+                case 'Cấp nhỏ':
+                    return {
+                pane: 'pane_PhnLoiSnBay_2',
+                radius: 4.0,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(52,154,223,1.0)',
+                interactive: true,
+            }
+                    break;
+                case 'Cấp trung':
+                    return {
+                pane: 'pane_PhnLoiSnBay_2',
+                radius: 4.0,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(228,228,114,1.0)',
+                interactive: true,
+            }
+                    break;
+                case 'Không xác':
+                    return {
+                pane: 'pane_PhnLoiSnBay_2',
+                radius: 4.0,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(100,220,126,1.0)',
+                interactive: true,
+            }
+                    break;
+            }
+        }
+        map.createPane('pane_PhnLoiSnBay_2');
+        map.getPane('pane_PhnLoiSnBay_2').style.zIndex = 402;
+        map.getPane('pane_PhnLoiSnBay_2').style['mix-blend-mode'] = 'normal';
+        var layer_PhnLoiSnBay_2 = new L.geoJson(json_PhnLoiSnBay_2, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_PhnLoiSnBay_2',
+            layerName: 'layer_PhnLoiSnBay_2',
+            pane: 'pane_PhnLoiSnBay_2',
+            onEachFeature: pop_PhnLoiSnBay_2,
+            pointToLayer: function (feature, latlng) {
+                var context = {
+                    feature: feature,
+                    variables: {}
+                };
+                return L.circleMarker(latlng, style_PhnLoiSnBay_2_0(feature));
+            },
+        });
+        bounds_group.addLayer(layer_PhnLoiSnBay_2);
+        map.addLayer(layer_PhnLoiSnBay_2);
+        function pop_VTrHotng_3(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var popupContent = '<table>\
+                    <tr>\
+                        <th scope="row">Tên Sân Bay</th>\
+                        <td>' + (feature.properties['name'] !== null ? autolinker.link(String(feature.properties['name']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Mã định danh gps</th>\
+                        <td>' + (feature.properties['gps_code'] !== null ? autolinker.link(String(feature.properties['gps_code']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Ví Trí Hoạt Động</th>\
+                        <td>' + (feature.properties['ViTriHoatD'] !== null ? autolinker.link(String(feature.properties['ViTriHoatD']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Phân Loại Sân Bay</th>\
+                        <td>' + (feature.properties['PLSanBay'] !== null ? autolinker.link(String(feature.properties['PLSanBay']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Lớp Kết Hợp (Loại + Vị Trí)</th>\
+                        <td>' + (feature.properties['LopKetHop'] !== null ? autolinker.link(String(feature.properties['LopKetHop']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_VTrHotng_3_0(feature) {
+            switch(String(feature.properties['ViTriHoatD'])) {
+                case 'Bãi đỗ':
+                    return {
+                pane: 'pane_VTrHotng_3',
+                radius: 4.0,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(228,21,118,1.0)',
+                interactive: true,
+            }
+                    break;
+                case 'Đường băng':
+                    return {
+                pane: 'pane_VTrHotng_3',
+                radius: 4.0,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(208,177,93,1.0)',
+                interactive: true,
+            }
+                    break;
+                case 'Khác':
+                    return {
+                pane: 'pane_VTrHotng_3',
+                radius: 4.0,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(122,211,116,1.0)',
+                interactive: true,
+            }
+                    break;
+                case 'Nhà ga':
+                    return {
+                pane: 'pane_VTrHotng_3',
+                radius: 4.0,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(105,49,218,1.0)',
+                interactive: true,
+            }
+                    break;
+            }
+        }
+        map.createPane('pane_VTrHotng_3');
+        map.getPane('pane_VTrHotng_3').style.zIndex = 403;
+        map.getPane('pane_VTrHotng_3').style['mix-blend-mode'] = 'normal';
+        var layer_VTrHotng_3 = new L.geoJson(json_VTrHotng_3, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_VTrHotng_3',
+            layerName: 'layer_VTrHotng_3',
+            pane: 'pane_VTrHotng_3',
+            onEachFeature: pop_VTrHotng_3,
+            pointToLayer: function (feature, latlng) {
+                var context = {
+                    feature: feature,
+                    variables: {}
+                };
+                return L.circleMarker(latlng, style_VTrHotng_3_0(feature));
+            },
+        });
+        bounds_group.addLayer(layer_VTrHotng_3);
+        map.addLayer(layer_VTrHotng_3);
+        function pop_SnBay_4(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var popupContent = '<table>\
+                    <tr>\
+                        <th scope="row">Tên Sân Bay</th>\
+                        <td>' + (feature.properties['name'] !== null ? autolinker.link(String(feature.properties['name']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Mã định danh gps</th>\
+                        <td>' + (feature.properties['gps_code'] !== null ? autolinker.link(String(feature.properties['gps_code']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Ví Trí Hoạt Động</th>\
+                        <td>' + (feature.properties['ViTriHoatD'] !== null ? autolinker.link(String(feature.properties['ViTriHoatD']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Phân Loại Sân Bay</th>\
+                        <td>' + (feature.properties['PLSanBay'] !== null ? autolinker.link(String(feature.properties['PLSanBay']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td class="visible-with-data" id="LopKetHop" colspan="2"><strong>Lớp Kết Hợp (Loại + Vị Trí)</strong><br />' + (feature.properties['LopKetHop'] !== null ? autolinker.link(String(feature.properties['LopKetHop']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_SnBay_4_0() {
+            return {
+                pane: 'pane_SnBay_4',
+                radius: 4.0,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(114,155,111,1.0)',
+                interactive: true,
+            }
+        }
+        map.createPane('pane_SnBay_4');
+        map.getPane('pane_SnBay_4').style.zIndex = 404;
+        map.getPane('pane_SnBay_4').style['mix-blend-mode'] = 'normal';
+        var layer_SnBay_4 = new L.geoJson(json_SnBay_4, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_SnBay_4',
+            layerName: 'layer_SnBay_4',
+            pane: 'pane_SnBay_4',
+            onEachFeature: pop_SnBay_4,
+            pointToLayer: function (feature, latlng) {
+                var context = {
+                    feature: feature,
+                    variables: {}
+                };
+                return L.circleMarker(latlng, style_SnBay_4_0(feature));
+            },
+        });
+        bounds_group.addLayer(layer_SnBay_4);
+        map.addLayer(layer_SnBay_4);
+        var osmGeocoder = new L.Control.Geocoder({
+            collapsed: true,
+            position: 'topleft',
+            text: 'Search',
+            title: 'Testing'
+        }).addTo(map);
+        document.getElementsByClassName('leaflet-control-geocoder-icon')[0]
+        .className += ' fa fa-search';
+        document.getElementsByClassName('leaflet-control-geocoder-icon')[0]
+        .title += 'Search for a place';
+        var overlaysTree = [
+            {label: '<img src="legend/SnBay_4.png" /> Sân Bay', layer: layer_SnBay_4},
+            {label: 'Vị Trí Hoạt Động<br /><table><tr><td style="text-align: center;"><img src="legend/VTrHotng_3_Bãiđỗ0.png" /></td><td>Bãi đỗ</td></tr><tr><td style="text-align: center;"><img src="legend/VTrHotng_3_Đườngbăng1.png" /></td><td>Đường băng</td></tr><tr><td style="text-align: center;"><img src="legend/VTrHotng_3_Khác2.png" /></td><td>Khác</td></tr><tr><td style="text-align: center;"><img src="legend/VTrHotng_3_Nhàga3.png" /></td><td>Nhà ga</td></tr></table>', layer: layer_VTrHotng_3},
+            {label: 'Phân Loại Sân Bay<br /><table><tr><td style="text-align: center;"><img src="legend/PhnLoiSnBay_2_Cấplớn0.png" /></td><td>Cấp lớn</td></tr><tr><td style="text-align: center;"><img src="legend/PhnLoiSnBay_2_Cấpnhỏ1.png" /></td><td>Cấp nhỏ</td></tr><tr><td style="text-align: center;"><img src="legend/PhnLoiSnBay_2_Cấptrung2.png" /></td><td>Cấp trung</td></tr><tr><td style="text-align: center;"><img src="legend/PhnLoiSnBay_2_Khôngxác3.png" /></td><td>Không xác</td></tr></table>', layer: layer_PhnLoiSnBay_2},
+            {label: 'Lớp Kết Hợp ( Loại+ + Vị Trí)<br /><table><tr><td style="text-align: center;"><img src="legend/LpKtHpLoiVTr_1_Bãiđỗmáy0.png" /></td><td>Bãi đỗ máy</td></tr><tr><td style="text-align: center;"><img src="legend/LpKtHpLoiVTr_1_Đườngbăng1.png" /></td><td>Đường băng</td></tr><tr><td style="text-align: center;"><img src="legend/LpKtHpLoiVTr_1_Loạikhác2.png" /></td><td>Loại khác</td></tr><tr><td style="text-align: center;"><img src="legend/LpKtHpLoiVTr_1_Nhàgacấp3.png" /></td><td>Nhà ga cấp</td></tr></table>', layer: layer_LpKtHpLoiVTr_1},
+            {label: "Google Satellite", layer: layer_GoogleSatellite_0},]
+        var lay = L.control.layers.tree(null, overlaysTree,{
+            //namedToggle: true,
+            //selectorBack: false,
+            //closedSymbol: '&#8862; &#x1f5c0;',
+            //openedSymbol: '&#8863; &#x1f5c1;',
+            //collapseAll: 'Collapse all',
+            //expandAll: 'Expand all',
+            collapsed: true,
+        });
+        lay.addTo(map);
+        setBounds();
+        var mapDiv = document.getElementById('map');
+        var row = document.createElement('div');
+        row.className="row";
+        row.id="all";
+        row.style.height = "100%";
+        var col1 = document.createElement('div');
+        col1.className="col9";
+        col1.id = "mapWindow";
+        col1.style.height = "99%";
+        col1.style.width = "80%";
+        col1.style.display = "inline-block";
+        var col2 = document.createElement('div');
+        col2.className="col3";
+        col2.id = "menu";
+        col2.style.display = "inline-block";
+        mapDiv.parentNode.insertBefore(row, mapDiv);
+        document.getElementById("all").appendChild(col1);
+        document.getElementById("all").appendChild(col2);
+        col1.appendChild(mapDiv)
+        var Filters = {"LopKetHop": "str","ViTriHoatD": "str","PLSanBay": "str"};
+        function filterFunc() {
+          map.eachLayer(function(lyr){
+          if ("options" in lyr && "dataVar" in lyr["options"]){
+            features = this[lyr["options"]["dataVar"]].features.slice(0);
+            try{
+              for (key in Filters){
+                keyS = key.replace(/[^a-zA-Z0-9_]/g, "")
+                if (Filters[key] == "str" || Filters[key] == "bool"){
+                  var selection = [];
+                  var options = document.getElementById("sel_" + keyS).options
+                  for (var i=0; i < options.length; i++) {
+                    if (options[i].selected) selection.push(options[i].value);
+                  }
+                    try{
+                      if (key in features[0].properties){
+                        for (i = features.length - 1;
+                          i >= 0; --i){
+                          if (selection.indexOf(
+                          features[i].properties[key])<0
+                          && selection.length>0) {
+                          features.splice(i,1);
+                          }
+                        }
+                      }
+                    } catch(err){
+                  }
+                }
+                if (Filters[key] == "int"){
+                  sliderVals =  document.getElementById(
+                    "div_" + keyS).noUiSlider.get();
+                  try{
+                    if (key in features[0].properties){
+                    for (i = features.length - 1; i >= 0; --i){
+                      if (parseInt(features[i].properties[key])
+                          < sliderVals[0]
+                          || parseInt(features[i].properties[key])
+                          > sliderVals[1]){
+                            features.splice(i,1);
+                          }
+                        }
+                      }
+                    } catch(err){
+                    }
+                  }
+                if (Filters[key] == "real"){
+                  sliderVals =  document.getElementById(
+                    "div_" + keyS).noUiSlider.get();
+                  try{
+                    if (key in features[0].properties){
+                    for (i = features.length - 1; i >= 0; --i){
+                      if (features[i].properties[key]
+                          < sliderVals[0]
+                          || features[i].properties[key]
+                          > sliderVals[1]){
+                            features.splice(i,1);
+                          }
+                        }
+                      }
+                    } catch(err){
+                    }
+                  }
+                if (Filters[key] == "date"
+                  || Filters[key] == "datetime"
+                  || Filters[key] == "time"){
+                  try{
+                    if (key in features[0].properties){
+                      HTMLkey = key.replace(/[&\/\\#,+()$~%.'":*?<>{} ]/g, '');
+                      startdate = document.getElementById("dat_" +
+                        HTMLkey + "_date1").value.replace(" ", "T");
+                      enddate = document.getElementById("dat_" +
+                        HTMLkey + "_date2").value.replace(" ", "T");
+                      for (i = features.length - 1; i >= 0; --i){
+                        if (features[i].properties[key] < startdate
+                          || features[i].properties[key] > enddate){
+                          features.splice(i,1);
+                        }
+                      }
+                    }
+                  } catch(err){
+                  }
+                }
+              }
+            } catch(err){
+            }
+          this[lyr["options"]["layerName"]].clearLayers();
+          this[lyr["options"]["layerName"]].addData(features);
+          }
+          })
+        }
+            document.getElementById("menu").appendChild(
+                document.createElement("div"));
+            var div_LopKetHop = document.createElement('div');
+            div_LopKetHop.id = "div_LopKetHop";
+            div_LopKetHop.className= "filterselect";
+            document.getElementById("menu").appendChild(div_LopKetHop);
+            sel_LopKetHop = document.createElement('select');
+            sel_LopKetHop.multiple = true;
+            sel_LopKetHop.size = 4;
+            sel_LopKetHop.id = "sel_LopKetHop";
+            var LopKetHop_options_str = "<option value='' unselected></option>";
+            sel_LopKetHop.onchange = function(){filterFunc()};
+            LopKetHop_options_str  += '<option value="Bãi đỗ máy">Bãi đỗ máy</option>';
+            LopKetHop_options_str  += '<option value="Loại khác">Loại khác</option>';
+            LopKetHop_options_str  += '<option value="Nhà ga cấp">Nhà ga cấp</option>';
+            LopKetHop_options_str  += '<option value="Đường băng">Đường băng</option>';
+            sel_LopKetHop.innerHTML = LopKetHop_options_str;
+            div_LopKetHop.appendChild(sel_LopKetHop);
+            var lab_LopKetHop = document.createElement('div');
+            lab_LopKetHop.innerHTML = 'LopKetHop';
+            lab_LopKetHop.className = 'filterlabel';
+            div_LopKetHop.appendChild(lab_LopKetHop);
+            var reset_LopKetHop = document.createElement('div');
+            reset_LopKetHop.innerHTML = 'clear filter';
+            reset_LopKetHop.className = 'filterlabel';
+            reset_LopKetHop.onclick = function() {
+                var options = document.getElementById("sel_LopKetHop").options;
+                for (var i=0; i < options.length; i++) {
+                    options[i].selected = false;
+                }
+                filterFunc();
+            };
+            div_LopKetHop.appendChild(reset_LopKetHop);
+            document.getElementById("menu").appendChild(
+                document.createElement("div"));
+            var div_ViTriHoatD = document.createElement('div');
+            div_ViTriHoatD.id = "div_ViTriHoatD";
+            div_ViTriHoatD.className= "filterselect";
+            document.getElementById("menu").appendChild(div_ViTriHoatD);
+            sel_ViTriHoatD = document.createElement('select');
+            sel_ViTriHoatD.multiple = true;
+            sel_ViTriHoatD.size = 4;
+            sel_ViTriHoatD.id = "sel_ViTriHoatD";
+            var ViTriHoatD_options_str = "<option value='' unselected></option>";
+            sel_ViTriHoatD.onchange = function(){filterFunc()};
+            ViTriHoatD_options_str  += '<option value="Bãi đỗ">Bãi đỗ</option>';
+            ViTriHoatD_options_str  += '<option value="Khác">Khác</option>';
+            ViTriHoatD_options_str  += '<option value="Nhà ga">Nhà ga</option>';
+            ViTriHoatD_options_str  += '<option value="Đường băng">Đường băng</option>';
+            sel_ViTriHoatD.innerHTML = ViTriHoatD_options_str;
+            div_ViTriHoatD.appendChild(sel_ViTriHoatD);
+            var lab_ViTriHoatD = document.createElement('div');
+            lab_ViTriHoatD.innerHTML = 'ViTriHoatD';
+            lab_ViTriHoatD.className = 'filterlabel';
+            div_ViTriHoatD.appendChild(lab_ViTriHoatD);
+            var reset_ViTriHoatD = document.createElement('div');
+            reset_ViTriHoatD.innerHTML = 'clear filter';
+            reset_ViTriHoatD.className = 'filterlabel';
+            reset_ViTriHoatD.onclick = function() {
+                var options = document.getElementById("sel_ViTriHoatD").options;
+                for (var i=0; i < options.length; i++) {
+                    options[i].selected = false;
+                }
+                filterFunc();
+            };
+            div_ViTriHoatD.appendChild(reset_ViTriHoatD);
+            document.getElementById("menu").appendChild(
+                document.createElement("div"));
+            var div_PLSanBay = document.createElement('div');
+            div_PLSanBay.id = "div_PLSanBay";
+            div_PLSanBay.className= "filterselect";
+            document.getElementById("menu").appendChild(div_PLSanBay);
+            sel_PLSanBay = document.createElement('select');
+            sel_PLSanBay.multiple = true;
+            sel_PLSanBay.size = 4;
+            sel_PLSanBay.id = "sel_PLSanBay";
+            var PLSanBay_options_str = "<option value='' unselected></option>";
+            sel_PLSanBay.onchange = function(){filterFunc()};
+            PLSanBay_options_str  += '<option value="Cấp lớn">Cấp lớn</option>';
+            PLSanBay_options_str  += '<option value="Cấp nhỏ">Cấp nhỏ</option>';
+            PLSanBay_options_str  += '<option value="Cấp trung">Cấp trung</option>';
+            PLSanBay_options_str  += '<option value="Không xác">Không xác</option>';
+            sel_PLSanBay.innerHTML = PLSanBay_options_str;
+            div_PLSanBay.appendChild(sel_PLSanBay);
+            var lab_PLSanBay = document.createElement('div');
+            lab_PLSanBay.innerHTML = 'PLSanBay';
+            lab_PLSanBay.className = 'filterlabel';
+            div_PLSanBay.appendChild(lab_PLSanBay);
+            var reset_PLSanBay = document.createElement('div');
+            reset_PLSanBay.innerHTML = 'clear filter';
+            reset_PLSanBay.className = 'filterlabel';
+            reset_PLSanBay.onclick = function() {
+                var options = document.getElementById("sel_PLSanBay").options;
+                for (var i=0; i < options.length; i++) {
+                    options[i].selected = false;
+                }
+                filterFunc();
+            };
+            div_PLSanBay.appendChild(reset_PLSanBay);
+        </script>
+    </body>
+</html>
